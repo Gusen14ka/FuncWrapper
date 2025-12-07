@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
+#include "Engine.hpp"
 
 template<typename Obj, typename ...Args>
 class Wrapper{
@@ -31,7 +31,8 @@ public:
         typename = std::enable_if_t<std::is_member_function_pointer_v<std::decay_t<MFunc>>>>
     Wrapper(Obj* obj, MFunc f_ptr, std::initializer_list<std::pair<std::string, int>> defaults = {});
 
-    int invoke(std::initializer_list<std::pair<std::string, int>> args = {});
+    template<typename ...WrapT>
+    friend int Engine::invoke_wrapper(Wrapper<WrapT...>* wrap, std::initializer_list<std::pair<std::string,int>> args);
 
 private:
     static constexpr size_t arity = sizeof...(Args);
@@ -44,6 +45,10 @@ private:
     int invoke_with_ind_seq(std::index_sequence<Inds...> indexes, std::vector<int> && args);
 
     void init(std::initializer_list<std::pair<std::string, int>> defaults);
+
+    int invoke(std::initializer_list<std::pair<std::string, int>> args = {});
+
+    
 };
 
 template<typename Obj, typename ...Args>

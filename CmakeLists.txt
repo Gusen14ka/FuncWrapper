@@ -9,6 +9,7 @@ add_executable(Wrapper
     main.cpp
     include/Wrapper.hpp
     include/Engine.hpp src/Engine.cpp
+    include/wrapper_fwd.hpp
 )
 
 target_include_directories(Wrapper PRIVATE include)
