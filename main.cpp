@@ -130,6 +130,5 @@ int main() {
         std::cout << "std::function<int(Args...)> from lambda\n" << "noobj(2,3) => " << engine.execute("noobj", { {"arg1",2}, {"arg2",3} }) << " (expect 1005)\n\n";
     }
     
-    std::cout << "\n=== Test suite end ===\n";
     return 0;
 }
