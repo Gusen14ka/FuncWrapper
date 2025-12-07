@@ -16,9 +16,20 @@ class Wrapper{
 public:   
     using func_ptr = std::function<int(Obj*, Args...)>;
 
-    template<typename Callable,
-        typename = std::enable_if_t<!std::is_same_v<std::decay_t<Callable>, Wrapper>>>
-    Wrapper(Obj * obj, Callable callable, std::initializer_list<std::pair<std::string, int>> defaults = {});
+    /*
+    Поддерживаем создание только от: 
+    1) явных указателей на методы класса (const или нет) 
+    2) std::function<int(Obj*, Args...)>
+    3) std::function<int(Args...)> - просто длдя полноты картины
+    */
+    Wrapper(Obj* obj, func_ptr f_ptr, std::initializer_list<std::pair<std::string, int>> defaults = {});
+
+    Wrapper(Obj* obj, std::function<int(Args...)> f_ptr, std::initializer_list<std::pair<std::string, int>> defaults = {});
+
+    // Используем SFINAE для проверки того, что MFunc нужный указатель
+    template<typename MFunc, 
+        typename = std::enable_if_t<std::is_member_function_pointer_v<std::decay_t<MFunc>>>>
+    Wrapper(Obj* obj, MFunc f_ptr, std::initializer_list<std::pair<std::string, int>> defaults = {});
 
     int invoke(std::initializer_list<std::pair<std::string, int>> args = {});
 
@@ -31,18 +42,38 @@ private:
 
     template<size_t ...Inds>
     int invoke_with_ind_seq(std::index_sequence<Inds...> indexes, std::vector<int> && args);
+
+    void init(std::initializer_list<std::pair<std::string, int>> defaults);
 };
 
+template<typename Obj, typename ...Args>
+Wrapper<Obj,Args...>::Wrapper(Obj * obj, std::function<int(Obj*, Args...)> f_ptr, 
+    std::initializer_list<std::pair<std::string, int>> defaults) : obj_(obj), method_(f_ptr)
+{
+    init(defaults);
+}
 
 template<typename Obj, typename ...Args>
-template<typename Callable, typename /*Определили внутри класса*/>
-Wrapper<Obj,Args...>::Wrapper(Obj * obj, Callable callable, std::initializer_list<std::pair<std::string, int>> defaults)
+Wrapper<Obj,Args...>::Wrapper(Obj* obj, std::function<int(Args...)> f_ptr, 
+    std::initializer_list<std::pair<std::string, int>> defaults): obj_(obj)
+{
+    method_ = [f_ptr](Obj*, Args ...args){
+        return f_ptr(args...);
+    };
+    init(defaults);
+}
+
+template<typename Obj, typename ...Args>
+template<typename MFunc, typename /*Определили внутри класса*/>
+Wrapper<Obj,Args...>::Wrapper(Obj * obj, MFunc f_ptr, std::initializer_list<std::pair<std::string, int>> defaults)
     : obj_(obj)
 {
-    method_ = [callable](Obj * obj, Args... args){
-        return std::invoke(callable, obj, args...);
-    };
+    method_ = std::mem_fn(f_ptr);
+    init(defaults);
+}
 
+template<typename Obj, typename ...Args>
+void Wrapper<Obj,Args...>::init(std::initializer_list<std::pair<std::string, int>> defaults){
     int count = 0;
     aliasToIdx_.reserve(arity);
     defArgs_.reserve(arity);
@@ -85,3 +116,9 @@ Wrapper(Obj*, int (Obj::*)(Args...), std::initializer_list<std::pair<std::string
 
 template<typename Obj, typename... Args>
 Wrapper(Obj*, int (Obj::*)(Args...) const, std::initializer_list<std::pair<std::string,int>> = {}) -> Wrapper<Obj, Args...>;
+
+template<typename Obj, typename... Args>
+Wrapper(Obj*, std::function<int(Obj*, Args...)>, std::initializer_list<std::pair<std::string,int>> = {}) -> Wrapper<Obj, Args...>;
+
+template<typename Obj, typename... Args>
+Wrapper(Obj*, std::function<int(Args...)>, std::initializer_list<std::pair<std::string,int>> = {}) -> Wrapper<Obj, Args...>;
