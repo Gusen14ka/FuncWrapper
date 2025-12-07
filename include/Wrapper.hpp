@@ -31,7 +31,8 @@ public:
         typename = std::enable_if_t<std::is_member_function_pointer_v<std::decay_t<MFunc>>>>
     Wrapper(Obj* obj, MFunc f_ptr, std::initializer_list<std::pair<std::string, int>> defaults = {});
 
-    friend class Engine;
+    template<typename ...WrapT>
+    friend int Engine::invoke_wrapper(Wrapper<WrapT...>* wrap, std::initializer_list<std::pair<std::string,int>> args);
 
 private:
     static constexpr size_t arity = sizeof...(Args);
