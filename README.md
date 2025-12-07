@@ -34,17 +34,6 @@ cmake --build . --config Release
 2. Создаём `Wrapper` для метода и указываем список пар `{"имя_аргумента", значение_по_умолчанию}` — количество пар должно совпадать с арностью метода.
 3. Регистрируем `Wrapper` в `Engine` под некоторым именем и вызываем через `Engine::execute(name, init_list)`.
 
-Пример (см. `main.cpp`):
-
-```cpp
-Subject subj;
-// Обёртка для const-метода plus(int arg1, int arg2) const
-Wrapper w(&subj, &Subject::plus, { {"arg1", 0}, {"arg2", 0} });
-Engine engine;
-engine.register_command(&w, "add");
-int res = engine.execute("add", { {"arg2", 5}, {"arg1", 4} }); // -> 9
-```
-
 **API (кратко)**
 
 - `Wrapper<Obj, Args...>` — шаблонный класс-обёртка.

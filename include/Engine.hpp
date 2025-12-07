@@ -1,9 +1,11 @@
 #pragma once
 
-#include "Wrapper.hpp"
 #include <functional>
 #include <string>
 #include <unordered_map>
+#include "wrapper_fwd.hpp"
+
+
 
 class Engine{
     using init_list = std::initializer_list<std::pair<std::string, int>>;
